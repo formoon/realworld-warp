@@ -1,0 +1,78 @@
+# Background
+Realworld is ["The Mother of all demo apps"](https://codebase.show/projects/realworld).  
+This project specifies a precise API description. Thus there are a large number of independent front-end implementations and back-end implementations. Any front-end can working with another set of back-ends.  
+On the other hand, Realworld defines a full-featured forum system. In order to achieve this exquisite small goal, a lot of practical technology needs to be applied. If the front-end and back-end solutions achieve this goal, and it is easy to verify the development potential in other Internet application topics.  
+
+# Rust+Warp
+This back-end implementation uses Rust language and Warp Web framework. The database system uses PostgreSQL through Diesel ORM.  
+Most of the program code comes from another Rust RealWorld implementation: [Rust + Rocket](https://github.com/TatriX/realworld-rust-rocket).  
+I used to be a user of Rocket and Actix, but neither of them satisfied me. The former uses the Nightly version of Rust. It is also unstable when working, process lockup often. The latter has a large amount of memory usage for unknown reasons.  
+Finally, I moved to the Warp framework, at least until now, Warp's performance is very satisfying.  
+
+# Difference with official specs
+* This implementation embed static file server, you can directly put front-end in to `./dist/` folder
+* Add upload function for some file exchange request 
+* Addition command line tool
+
+# Install
+* Setup PostgreSQL database
+* Run init.sql to create user and database in psql client:  
+```sql
+CREATE USER realworld WITH PASSWORD 'realworld';
+CREATE DATABASE realworld;
+GRANT ALL PRIVILEGES ON DATABASE realworld TO realworld;
+```
+* setting `.env` configure file in working root directory as sample below:
+```bash
+DATABASE_URL=postgres://realworld:realworld@127.0.0.1:6551/realworld
+SECRET_KEY="8Xui8SN4mI+7egV/9dlfYYLGQJeEx4+DwmSQLwDVXJg="
+WEB_URL="0.0.0.0:8000"
+SERVER_NAME="RealWorld Server"
+#RUST_LOG=info
+#RUST_LOG=trace
+RUST_LOG=debug
+PUBLIC_BOARD=true
+```
+* Install PostgreSQL dev library,  
+
+mac: 
+```bash
+brew install libpq
+```
+ubuntu:   
+```bash 
+sudo apt install libpq-dev postgresql-server-dev-all
+```
+
+* Run diesel setup database tables
+```bash
+# install diesel client
+cargo install diesel_cli --no-default-features --features "postgres"
+# setting up tables
+diesel migration run
+```
+* Copy Realworld front-end to `./dist/` folder, currently I put Vue version client here
+
+# run in debug mode
+```bash
+cargo run --bin realworld-warp
+```
+
+# compile
+```bash
+cargo build --release
+```
+
+# run
+There will be 2 binary compiled:  
+* `realworld-warp` is main program
+* `realworld-cli` is a command line tool help list user/article/comment, or delete them  
+
+You need run in the root path of project, because `.env`  `./dist/` and some other dependency path location
+```bash
+./target/release/realworld-warp
+```
+
+
+
+
