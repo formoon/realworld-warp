@@ -78,4 +78,7 @@ You need run in the root path of project, because `.env`  `./dist/` and some oth
 (This is not a permenant server, so may not exist long)
 
 
+# other
+Upload function and Static file holder need front-end cooperate, suggest use [my vue version](https://github.com/formoon/vue-realworld-example-app), it's a revisionary from [Vue2 version RealWorld Frontend](https://github.com/gothinkster/vue-realworld-example-app)
+
 
