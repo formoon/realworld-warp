@@ -33,6 +33,8 @@ SERVER_NAME="RealWorld Server"
 RUST_LOG=debug
 PUBLIC_BOARD=true
 ```
+`.env.txt` file content is same as up, you directly rename as `.env` then edit as your wish
+
 * Install PostgreSQL dev library,  
 
 mac: 
