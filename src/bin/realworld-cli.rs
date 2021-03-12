@@ -9,7 +9,7 @@ use structopt::StructOpt;
 
 use realworld_warp::db;
 use realworld_warp::schema::users;
-//use realworld_warp::schema::follows;
+use realworld_warp::schema::articles;
 use realworld_warp::models::user::User;
 //use realworld_warp::models::user::Follow;
 use realworld_warp::db::OffsetLimit;
@@ -37,30 +37,30 @@ struct Opt {
 // if Option<bool>, then must "--all true|flase"
 //----------------------------------------------------------------------
 fn article_find(opt: &Opt, conn: &PgConnection){
-    let au:Option<String>;
-    let mut fa=FindArticles{
-        tag: None,
-        author: None,
-        favorited: None,
-        limit: Some(100),
-        offset: Some(0),
-    };
-    match &opt.name {
-        Some(a) => au = Some(a.clone()),
-        None => {
-            if opt.all{
-                au = None;
-            } else {
-                println!("Need name provide, or list all...");
-                return;
+    if opt.name.is_some() || opt.title.is_none(){
+        let fa=FindArticles{
+            tag: None,
+            author: opt.name.clone(), //no name  and no title means all
+            favorited: None,
+            limit: Some(100),
+            offset: Some(0),
+        };
+        let (res,_) = find(&conn,&fa,Some(0));
+        for a in res{
+            println!("\tid: {}\t title: {}",a.id, a.title);
+        };
+    } else {
+        articles::table
+        .select((articles::id,articles::title))
+        .into_boxed()
+        .filter(articles::title.like(format!("%{}%",opt.title.clone().unwrap())))
+        .load::<(i32,String)>(conn)
+        .map(|res|{
+            for r in res {
+                println!("\tid: {}\t title: {}",r.0, r.1);
             }
-        }
-    };
-    fa.author = au;
-    let (res,_) = find(&conn,&fa,Some(0));
-    for a in res{
-        println!("\tid: {}\t title: {}",a.id, a.title);
-    };
+        }).ok().unwrap();
+    }
 }
 fn article_opt(opt: &Opt){
     let conn=db::PG_POOL.clone().get().unwrap();
@@ -73,23 +73,6 @@ fn article_opt(opt: &Opt){
 
 //----------------------------------------------------------------------
 fn get_followers(uid: i32, conn: &PgConnection) { //-> Vec<User>{
-    /*
-    follows::table
-        .left_join(
-            users::table.on(users::id.eq(follows::follower))
-        )
-        .select((follows::all_columns,
-            users::all_columns))
-        .into_boxed()
-        .filter(follows::followed.eq(uid))
-        .offset_and_limit(0,100)
-        .load_and_count::<( Follow, User)>(conn)
-        .map(|(res,_)|{
-            res.into_iter()
-                .map(|(_, u)| u)
-                .collect()
-        }).ok().unwrap()
-        */
     let res:Vec<User>=sql_query(
             format!("SELECT users.* FROM follows 
                 LEFT JOIN users ON follows.follower=users.id 
@@ -97,9 +80,13 @@ fn get_followers(uid: i32, conn: &PgConnection) { //-> Vec<User>{
         )
         .load(conn).unwrap();
     // println!("sql result: {:?}",res);
-    for u in res{
-        println!("\tid: {}\t name: {}",u.id, u.username);
-    };
+    if res.len() == 0 {
+        println!("\t None");
+    } else {
+        for u in res{
+            println!("\tid: {}\t name: {}",u.id, u.username);
+        };
+    }
 }
 
 fn follow_list(opt: &Opt, conn: &PgConnection){

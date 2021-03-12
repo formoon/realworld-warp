@@ -68,7 +68,7 @@ cargo build --release
 # run
 There will be 2 binary compiled:  
 * `realworld-warp` is main program
-* `realworld-cli` is a command line tool help list user/article/comment, or delete them  
+* `realworld-cli` is a command line tool help list user/article/follow, or delete them  
 
 You need run in the root path of project, because `.env`  `./dist/` and some other dependency path location
 ```bash
