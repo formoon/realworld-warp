@@ -7,10 +7,11 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+warp = { version = "0.3.0", features = ["compression"]}
 futures = { version = "0.3.*" }
-tokio = {version = "0.2.*", features = ["full"] }
-
-warp = { version = "0.2.5", features = ["compression"]}
+tokio = {version = "1.0", features = ["full"] }
+# bytes version must same as [warp] source code
+bytes = "1.0"
 
 diesel = { version = "1.4.4", features = ["postgres", "chrono"] }
 # postgres = "0.19"
@@ -31,9 +32,6 @@ lazy_static = "1.4.0"
 log = "0.4"
 pretty_env_logger = "0.4"
 structopt = { version = "0.3", default-features = false }
-# bytes version must same as [warp] source code
-# bytes = "1.0.1"
-bytes = "0.5.6"
 uuid = { version = "0.8", features = ["v4"] }
 
 [features]
