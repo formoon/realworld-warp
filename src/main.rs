@@ -4,4 +4,3 @@ use realworld_warp;
 async fn main() {
     realworld_warp::launch().await;
 }
-

@@ -1,13 +1,13 @@
 use crate::auth::Auth;
-use chrono::{Duration, Utc};
-use serde::Serialize;
 use crate::config;
 use crate::schema::users;
+use chrono::{Duration, Utc};
+use serde::Serialize;
 
 type Url = String;
 
-#[table_name="users"]
-#[derive(Queryable, Serialize,QueryableByName,Debug)]
+#[table_name = "users"]
+#[derive(Queryable, Serialize, QueryableByName, Debug)]
 pub struct User {
     pub id: i32,
     pub username: String,

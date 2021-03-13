@@ -1,7 +1,7 @@
+use crate::db;
+use frank_jwt::{decode, encode, Algorithm, ValidationOptions};
 use serde::{Deserialize, Serialize};
 use serde_json::json; //not use json! in rocket_contrib
-use frank_jwt::{Algorithm, encode, decode, ValidationOptions};
-use crate::db;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Auth {
@@ -15,7 +15,7 @@ impl Auth {
     pub fn token(&self) -> String {
         let headers = json!({});
         let payload = json!(self);
-        let jwt=encode(
+        let jwt = encode(
             headers,
             &db::CONFIG.secret_key,
             // &config::SECRET.to_string(),
@@ -29,19 +29,22 @@ impl Auth {
 /// Decode token into `Auth` struct. If any error is encountered, log it
 /// an return None.
 pub fn decode_token(token: &str) -> Option<Auth> {
-    decode(token, 
-        // &config::SECRET.to_string(), 
+    decode(
+        token,
+        // &config::SECRET.to_string(),
         &db::CONFIG.secret_key,
-        Algorithm::HS256, &ValidationOptions::default())
-        .map(|(_, payload)| {
-            serde_json::from_value::<Auth>(payload)
-                .map_err(|err| {
-                    eprintln!("Auth serde decode error: {:?}", err);
-                })
-                .ok()
-        })
-        .unwrap_or_else(|err| {
-            eprintln!("Auth decode error: {:?}", err);
-            None
-        })
+        Algorithm::HS256,
+        &ValidationOptions::default(),
+    )
+    .map(|(_, payload)| {
+        serde_json::from_value::<Auth>(payload)
+            .map_err(|err| {
+                eprintln!("Auth serde decode error: {:?}", err);
+            })
+            .ok()
+    })
+    .unwrap_or_else(|err| {
+        eprintln!("Auth decode error: {:?}", err);
+        None
+    })
 }

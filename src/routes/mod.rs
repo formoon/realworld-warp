@@ -1,40 +1,59 @@
-use warp::{
-//    http::StatusCode,
-    multipart::{FormData, Part},
-    Filter, Rejection, Reply, reject,
-};
-use bytes::BufMut;
-use futures::TryStreamExt;
-use std::net::SocketAddr;
-use chrono::Utc;
-use uuid::Uuid;
-use crate::db;
+use crate::auth::{decode_token, Auth};
 use crate::config;
-use crate::auth::{ Auth, decode_token};
+use crate::db;
+use bytes::BufMut;
+use chrono::Utc;
+use futures::TryStreamExt;
 use serde_json::json;
+use std::net::SocketAddr;
+use uuid::Uuid;
+use warp::{
+    //    http::StatusCode,
+    multipart::{FormData, Part},
+    reject,
+    Filter,
+    Rejection,
+    Reply,
+};
 
-mod users;
 mod articles;
-mod tags;
 mod profiles;
+mod tags;
+mod users;
 
 pub async fn web_routes() {
     let cors = warp::cors()
         .allow_any_origin()
-        .allow_headers(vec!["User-Agent", "Sec-Fetch-Mode", "Referer", "Origin", 
-            "Access-Control-Request-Method", "Access-Control-Request-Headers", 
-            "Content-Type", "Authorization", "Accept", "Upgrade-Insecure-Requests",
-            "Host", "Accept-Language", "Accept-Encoding", "Connection"])
+        .allow_headers(vec![
+            "User-Agent",
+            "Sec-Fetch-Mode",
+            "Referer",
+            "Origin",
+            "Access-Control-Request-Method",
+            "Access-Control-Request-Headers",
+            "Content-Type",
+            "Authorization",
+            "Accept",
+            "Upgrade-Insecure-Requests",
+            "Host",
+            "Accept-Language",
+            "Accept-Encoding",
+            "Connection",
+        ])
         .allow_methods(vec!["POST", "GET", "PUT", "DELETE"]);
 
     let index = warp::get()
         .and(warp::path::end())
         // .map(|| warp::redirect(Uri::from_static("/static/index.html")));
-        .and(warp::fs::file(config::STATIC_PATH.to_string()+"index.html"));
+        .and(warp::fs::file(
+            config::STATIC_PATH.to_string() + "index.html",
+        ));
     let index1 = warp::get()
         .and(warp::path("index.html")) //not use path!, because don't wanna call end()
         // .map(|| warp::redirect(Uri::from_static("/static/index.html")));
-        .and(warp::fs::file(config::STATIC_PATH.to_string()+"index.html"));
+        .and(warp::fs::file(
+            config::STATIC_PATH.to_string() + "index.html",
+        ));
 
     let board_mode = warp::get()
         .and(warp::path!("js" / "board_mode.js"))
@@ -60,38 +79,36 @@ pub async fn web_routes() {
             format!("testpath: {:?}", tail)
         });*/
     let apis = users::route_create_user()
-            .or(users::route_user_login())
-            .or(users::route_put_user())
-            .or(users::route_get_user())
-            .or(articles::route_new_article())
-            .or(articles::route_get_articles_feed())
-            .or(articles::route_get_article())
-            .or(articles::route_get_articles())
-            .or(articles::route_get_comments())
-            .or(articles::route_update_article())
-            .or(articles::route_new_comment())
-            .or(articles::route_delete_comment())
-            .or(articles::route_delete_article())
-            .or(articles::route_favorite_article())
-            .or(articles::route_unfavorite_article())
-            .or(tags::route_get_tags())
-            .or(profiles::route_get_profile())
-            .or(profiles::route_follow())
-            .or(profiles::route_unfollow())
-            ;
+        .or(users::route_user_login())
+        .or(users::route_put_user())
+        .or(users::route_get_user())
+        .or(articles::route_new_article())
+        .or(articles::route_get_articles_feed())
+        .or(articles::route_get_article())
+        .or(articles::route_get_articles())
+        .or(articles::route_get_comments())
+        .or(articles::route_update_article())
+        .or(articles::route_new_comment())
+        .or(articles::route_delete_comment())
+        .or(articles::route_delete_article())
+        .or(articles::route_favorite_article())
+        .or(articles::route_unfavorite_article())
+        .or(tags::route_get_tags())
+        .or(profiles::route_get_profile())
+        .or(profiles::route_follow())
+        .or(profiles::route_unfollow());
     let routes = apis
-            .or(index)
-            .or(index1)
-            // .or(indexs)
-            // .or(testpath)
-            .or(statics)
-            .or(downloads)
-            .or(upload)
-            .or(board_mode)
-            .with(&cors)
-            ;
+        .or(index)
+        .or(index1)
+        // .or(indexs)
+        // .or(testpath)
+        .or(statics)
+        .or(downloads)
+        .or(upload)
+        .or(board_mode)
+        .with(&cors);
 
-    let addr: SocketAddr=db::CONFIG.web_url.parse().unwrap();
+    let addr: SocketAddr = db::CONFIG.web_url.parse().unwrap();
     warp::serve(routes).run(addr).await;
 }
 
@@ -101,21 +118,25 @@ pub fn extract_auth_head() -> impl Filter<Extract = (Auth,), Error = warp::Rejec
     warp::header::optional::<String>("authorization").and_then(|ops: Option<String>| async move {
         let s = match ops {
             Some(s) => s,
-            None => String::from("")
+            None => String::from(""),
         };
-        if s.starts_with(config::TOKEN_PREFIX){
-            let auth=decode_token(&s[config::TOKEN_PREFIX.len()..]);
+        if s.starts_with(config::TOKEN_PREFIX) {
+            let auth = decode_token(&s[config::TOKEN_PREFIX.len()..]);
             match auth {
                 Some(mut auth) => {
-                    if auth.exp < Utc::now().timestamp(){
-                        auth.exp = 0; 
+                    if auth.exp < Utc::now().timestamp() {
+                        auth.exp = 0;
                     }
                     log::debug!("auth head : {:?}", auth);
                     Ok(auth)
-                },
+                }
                 None => {
                     if db::CONFIG.public_board {
-                        Ok(Auth {exp:0, id:0, username:String::from("")})
+                        Ok(Auth {
+                            exp: 0,
+                            id: 0,
+                            username: String::from(""),
+                        })
                     } else {
                         Err(reject::not_found())
                     }
@@ -123,7 +144,11 @@ pub fn extract_auth_head() -> impl Filter<Extract = (Auth,), Error = warp::Rejec
             }
         } else {
             if db::CONFIG.public_board {
-                Ok(Auth {exp:0, id:0, username:String::from("")})
+                Ok(Auth {
+                    exp: 0,
+                    id: 0,
+                    username: String::from(""),
+                })
             } else {
                 Err(reject::not_found())
             }
@@ -142,13 +167,13 @@ async fn handle_upload(form: FormData) -> Result<impl Reply, Rejection> {
     for p in parts {
         let mp_filename = match p.filename() {
             Some(f) => String::from(f),
-            None => Uuid::new_v4().to_string()
+            None => Uuid::new_v4().to_string(),
         };
         if p.name() == "file" {
             let value = p
                 .stream()
                 .try_fold(Vec::new(), |mut vec, data| {
-                    //IMPORTANT: crate bytes version must same as warp version 
+                    //IMPORTANT: crate bytes version must same as warp version
                     vec.put(data);
                     async move { Ok(vec) }
                 })
@@ -167,11 +192,11 @@ async fn handle_upload(form: FormData) -> Result<impl Reply, Rejection> {
             db::UPLOAD_LIST.lock().unwrap().push(mp_filename);
         }
     }
-    let files=db::UPLOAD_LIST.lock().unwrap().clone();
-    let tmpjson=json!({ "status": "success", "filenames":files });
+    let files = db::UPLOAD_LIST.lock().unwrap().clone();
+    let tmpjson = json!({ "status": "success", "filenames":files });
     Ok(warp::reply::json(&tmpjson))
 }
 
 async fn handle_board_mode() -> Result<impl Reply, Rejection> {
-    Ok(format!("window.board_mode={};\n",db::CONFIG.public_board))
+    Ok(format!("window.board_mode={};\n", db::CONFIG.public_board))
 }

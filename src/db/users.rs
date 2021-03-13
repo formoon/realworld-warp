@@ -1,6 +1,6 @@
 use crate::models::user::User;
 use crate::schema::users;
-use bcrypt::{DEFAULT_COST, hash, verify};
+use bcrypt::{hash, verify, DEFAULT_COST};
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use diesel::result::{DatabaseErrorKind, Error};
@@ -40,7 +40,7 @@ pub fn create(
 ) -> Result<User, UserCreationError> {
     let shash = hash(password.as_bytes(), DEFAULT_COST).unwrap();
     let hash = shash.as_str();
-    
+
     let new_user = &NewUser {
         username,
         email,
@@ -61,12 +61,12 @@ pub fn login(conn: &PgConnection, email: &str, password: &str) -> Option<User> {
         .map_err(|err| eprintln!("login_user: {}", err))
         .ok()?;
     let elapsed = start.elapsed();
-    println!("Debug: {:?}", elapsed); 
+    println!("Debug: {:?}", elapsed);
 
     let password_matches = verify(password.as_bytes(), &user.hash).unwrap();
     let elapsed = start.elapsed();
-    println!("Debug: {:?}", elapsed); 
-    
+    println!("Debug: {:?}", elapsed);
+
     if password_matches {
         Some(user)
     } else {
@@ -111,7 +111,7 @@ pub fn update(conn: &PgConnection, id: i32, data: &UpdateUserData) -> Option<Use
         .ok()
 }
 
-pub fn delete(conn: &PgConnection, uid: i32) -> Option<usize>{
+pub fn delete(conn: &PgConnection, uid: i32) -> Option<usize> {
     diesel::delete(users::table.filter(users::id.eq(uid)))
         .execute(conn)
         .ok()

@@ -1,5 +1,5 @@
-use crate::db::OffsetLimit;
 use crate::db::profiles::is_following;
+use crate::db::OffsetLimit;
 use crate::models::article::{Article, ArticleJson, ArticleProfileJson};
 use crate::models::user::User;
 use crate::schema::articles;
@@ -79,7 +79,11 @@ pub struct FindArticles {
     pub offset: Option<i64>,
 }
 
-pub fn find(conn: &PgConnection, params: &FindArticles, user_id: Option<i32>) -> (Vec<ArticleJson>, i64) {
+pub fn find(
+    conn: &PgConnection,
+    params: &FindArticles,
+    user_id: Option<i32>,
+) -> (Vec<ArticleJson>, i64) {
     let mut query = articles::table
         .inner_join(users::table)
         .left_join(
@@ -136,7 +140,11 @@ pub fn find(conn: &PgConnection, params: &FindArticles, user_id: Option<i32>) ->
         .expect("Cannot load articles")
 }
 
-pub fn find_one(conn: &PgConnection, slug: &str, user_id: Option<i32>) -> Option<ArticleProfileJson> {
+pub fn find_one(
+    conn: &PgConnection,
+    slug: &str,
+    user_id: Option<i32>,
+) -> Option<ArticleProfileJson> {
     let article = articles::table
         .filter(articles::slug.eq(slug))
         .first::<Article>(conn)
@@ -270,12 +278,17 @@ fn is_favorite(conn: &PgConnection, article: &Article, user_id: i32) -> bool {
         .expect("Error loading favorited")
 }
 
-fn populate(conn: &PgConnection, article: Article, favorited: bool, user_id: i32) -> ArticleProfileJson {
+fn populate(
+    conn: &PgConnection,
+    article: Article,
+    favorited: bool,
+    user_id: i32,
+) -> ArticleProfileJson {
     let author = users::table
         .find(article.author)
         .get_result::<User>(conn)
         .expect("Error loading author");
-    let following=is_following(&conn, &author, user_id);
+    let following = is_following(&conn, &author, user_id);
     article.attach_profile(author, favorited, following)
 }
 

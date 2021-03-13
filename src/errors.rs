@@ -1,11 +1,11 @@
+use serde::Serialize;
+use serde_json::json;
 use std::collections::HashMap;
 use std::convert::Infallible;
 use validator::{Validate, ValidationError, ValidationErrors};
-use serde_json::json;
-use serde::Serialize;
 use warp::http::StatusCode;
 
-#[derive(Debug,Serialize)]
+#[derive(Debug, Serialize)]
 pub struct Errors {
     errors: ValidationErrors,
 }
@@ -24,22 +24,23 @@ impl Errors {
 
     fn get_json(self) -> serde_json::Value {
         let errors = self
-        .errors
-        .field_errors()
-        .into_iter()
-        .map(|(field, errors)| {
-            let codes = errors.into_iter().map(|err| err.code.to_string()).collect();
-            (field, codes)
-        })
-        .collect::<HashMap<_, Vec<_>>>();
+            .errors
+            .field_errors()
+            .into_iter()
+            .map(|(field, errors)| {
+                let codes = errors.into_iter().map(|err| err.code.to_string()).collect();
+                (field, codes)
+            })
+            .collect::<HashMap<_, Vec<_>>>();
 
         json!({ "errors": errors })
     }
     pub fn respond_to(self) -> Result<warp::reply::WithStatus<warp::reply::Json>, Infallible> {
-        let jsonerr=self.get_json();
+        let jsonerr = self.get_json();
         Ok(warp::reply::with_status(
-            warp::reply::json(&jsonerr), 
-            StatusCode::BAD_REQUEST))
+            warp::reply::json(&jsonerr),
+            StatusCode::BAD_REQUEST,
+        ))
     }
     /*
     pub fn respond_without_status(self) -> Result<impl warp::Reply, Infallible> {
@@ -89,5 +90,3 @@ impl FieldValidator {
         })
     }
 }
-
-
