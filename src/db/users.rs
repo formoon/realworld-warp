@@ -101,8 +101,16 @@ pub struct UpdateUserData {
 }
 
 pub fn update(conn: &PgConnection, id: i32, data: &UpdateUserData) -> Option<User> {
+    let shash:Option<String>;
+    if data.password != None {
+        let tmp = hash(data.password.as_ref().unwrap().as_bytes(), DEFAULT_COST).unwrap();
+        shash = Some(tmp);    
+    } else {
+        shash=None;
+    }
+
     let data = &UpdateUserData {
-        password: None,
+        password: shash,
         ..data.clone()
     };
     diesel::update(users::table.find(id))

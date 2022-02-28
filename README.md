@@ -16,7 +16,21 @@ Finally, I moved to the Warp framework, at least until now, Warp's performance i
 
 # Install
 * Setup PostgreSQL database
+* Install PostgreSQL dev library (Include PostgeSQL in Linux version)  
+
+mac: 
+```bash
+brew install libpq
+```
+ubuntu:   
+```bash 
+sudo apt install libpq-dev postgresql-server-dev-all
+```
+
 * Run init.sql to create user and database in psql client:  
+```bash
+sudo -u postgres psql -f init.sql 
+```
 ```sql
 CREATE USER realworld WITH PASSWORD 'realworld';
 CREATE DATABASE realworld;
@@ -34,17 +48,6 @@ RUST_LOG=debug
 PUBLIC_BOARD=true
 ```
 `.env.txt` file content is same as up, you directly rename as `.env` then edit as your wish
-
-* Install PostgreSQL dev library,  
-
-mac: 
-```bash
-brew install libpq
-```
-ubuntu:   
-```bash 
-sudo apt install libpq-dev postgresql-server-dev-all
-```
 
 * Run diesel setup database tables
 ```bash
